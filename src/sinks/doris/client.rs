@@ -271,6 +271,15 @@ impl DorisSinkClient {
 
         let status = parts.status;
 
+        // Debug: log the raw response body
+        let body_str = String::from_utf8_lossy(&body_bytes);
+        tracing::error!(
+            message = "DEBUG: Received response from Doris.",
+            http_status = %status,
+            body_length = body_bytes.len(),
+            body = %body_str
+        );
+
         let response_json = serde_json::from_slice::<Value>(&body_bytes)
             .map_err(|source| StreamLoadError::ParseResponseJson { source })?;
 
