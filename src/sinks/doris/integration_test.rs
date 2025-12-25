@@ -133,10 +133,14 @@ async fn insert_events() {
             .into(),
         headers: default_headers(),
         batch,
-        auth: Some(crate::http::Auth::Basic {
-            user: config_auth().user.clone(),
-            password: SensitiveString::from(config_auth().password.clone()),
-        }),
+        auth: if config_auth().password.is_empty() {
+            None
+        } else {
+            Some(crate::http::Auth::Basic {
+                user: config_auth().user.clone(),
+                password: SensitiveString::from(config_auth().password.clone()),
+            })
+        },
         request: Default::default(),
         ..Default::default()
     };
