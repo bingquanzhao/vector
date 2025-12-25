@@ -3,6 +3,7 @@ services:
   doris:
     image: docker.io/yagagagaga/doris-standalone:${CONFIG_VERSION}
     container_name: doris
+    hostname: doris
     restart: unless-stopped
     privileged: true
     ports:
