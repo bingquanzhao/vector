@@ -170,7 +170,7 @@ impl SinkConfig for DorisConfig {
                 let log_request = self.log_request;
 
                 async move {
-                    let endpoint = common.base_url.clone();
+                    let endpoint = common.base_url.to_string();
 
                     let doris_client = DorisSinkClient::new(
                         client_clone,

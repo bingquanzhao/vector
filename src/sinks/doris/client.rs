@@ -37,7 +37,7 @@ pub type ThreadSafeDorisSinkClient = Arc<DorisSinkClient>;
 #[derive(Clone, Debug)]
 pub struct DorisSinkClient {
     http_client: HttpClient,
-    base_url: String,
+    base_url: Uri,
     auth: Option<Auth>,
     compression: Compression,
     label_prefix: String,
@@ -47,7 +47,7 @@ pub struct DorisSinkClient {
 impl DorisSinkClient {
     pub async fn new(
         http_client: HttpClient,
-        base_url: String,
+        base_url: Uri,
         auth: Option<Auth>,
         compression: Compression,
         label_prefix: String,
@@ -293,10 +293,10 @@ impl DorisSinkClient {
         })
     }
 
-    pub async fn healthcheck_fenode(&self, endpoint: String) -> crate::Result<()> {
+    pub async fn healthcheck_fenode(&self, endpoint: &Uri) -> crate::Result<()> {
         // Use Doris bootstrap API endpoint for health check, GET method
         let query_path = "/api/bootstrap";
-        let endpoint_str = endpoint.trim_end_matches('/');
+        let endpoint_str = endpoint.to_string();
         let uri_str = format!("{}{}", endpoint_str, query_path);
 
         let uri = uri_str.parse::<Uri>().map_err(|source| {
@@ -342,13 +342,13 @@ impl DorisSinkClient {
                         if msg.to_lowercase() == "success" {
                             debug!(
                                 message = "Doris FE node is healthy.",
-                                node = %endpoint
+                                node = %endpoint_str
                             );
                             return Ok(());
                         } else {
                             debug!(
                                 message = "Doris FE node returned non-success message.",
-                                node = %endpoint,
+                                node = %endpoint_str,
                                 message = %msg
                             );
                             return Err(HealthCheckError::HealthCheckFailed {
@@ -366,7 +366,7 @@ impl DorisSinkClient {
 
         debug!(
             message = "Doris FE node health check failed.",
-            node = %endpoint,
+            node = %endpoint_str,
             status = %status
         );
 

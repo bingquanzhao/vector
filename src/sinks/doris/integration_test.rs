@@ -84,7 +84,7 @@ struct DorisAuth {
 fn config_auth() -> DorisAuth {
     DorisAuth {
         user: "root".to_string(),
-        password: "123456".to_string(),
+        password: "".to_string(),
     }
 }
 
