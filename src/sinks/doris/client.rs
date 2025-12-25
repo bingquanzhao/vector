@@ -108,9 +108,15 @@ impl DorisSinkClient {
                 StreamLoadError::InvalidRedirectUri { source }
             })?
         } else {
-            // Build original URL
+            // Build original URL using Uri components to avoid trailing slash issues
+            let scheme = self.base_url.scheme_str().unwrap_or("http");
+            let authority = self
+                .base_url
+                .authority()
+                .map(|a| a.as_str())
+                .unwrap_or("");
             let stream_load_url =
-                format!("{}/api/{}/{}/_stream_load", self.base_url, database, table);
+                format!("{}://{}/api/{}/{}/_stream_load", scheme, authority, database, table);
 
             stream_load_url.parse::<Uri>().map_err(|source| {
                 debug!(
@@ -271,15 +277,6 @@ impl DorisSinkClient {
 
         let status = parts.status;
 
-        // Debug: log the raw response body
-        let body_str = String::from_utf8_lossy(&body_bytes);
-        tracing::error!(
-            message = "DEBUG: Received response from Doris.",
-            http_status = %status,
-            body_length = body_bytes.len(),
-            body = %body_str
-        );
-
         let response_json = serde_json::from_slice::<Value>(&body_bytes)
             .map_err(|source| StreamLoadError::ParseResponseJson { source })?;
 
@@ -304,9 +301,9 @@ impl DorisSinkClient {
 
     pub async fn healthcheck_fenode(&self, endpoint: &Uri) -> crate::Result<()> {
         // Use Doris bootstrap API endpoint for health check, GET method
-        let query_path = "/api/bootstrap";
-        let endpoint_str = endpoint.to_string();
-        let uri_str = format!("{}{}", endpoint_str, query_path);
+        let scheme = endpoint.scheme_str().unwrap_or("http");
+        let authority = endpoint.authority().map(|a| a.as_str()).unwrap_or("");
+        let uri_str = format!("{}://{}/api/bootstrap", scheme, authority);
 
         let uri = uri_str.parse::<Uri>().map_err(|source| {
             debug!(
@@ -351,13 +348,13 @@ impl DorisSinkClient {
                         if msg.to_lowercase() == "success" {
                             debug!(
                                 message = "Doris FE node is healthy.",
-                                node = %endpoint_str
+                                node = %endpoint
                             );
                             return Ok(());
                         } else {
                             debug!(
                                 message = "Doris FE node returned non-success message.",
-                                node = %endpoint_str,
+                                node = %endpoint,
                                 message = %msg
                             );
                             return Err(HealthCheckError::HealthCheckFailed {
@@ -375,7 +372,7 @@ impl DorisSinkClient {
 
         debug!(
             message = "Doris FE node health check failed.",
-            node = %endpoint_str,
+            node = %endpoint,
             status = %status
         );
 
