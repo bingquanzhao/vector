@@ -1,5 +1,5 @@
 features:
-- sinks-doris
+- doris-integration-tests
 
 test_filter: '::doris::integration_test::'
 
@@ -14,4 +14,4 @@ matrix:
 paths:
 - "src/sinks/doris/**"
 - "src/sinks/util/**"
-- "scripts/integration/doris/**"
+- "tests/integration/doris/**"
